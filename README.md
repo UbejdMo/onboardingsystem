@@ -71,7 +71,50 @@ renumber existing records.
 scored zero" are different facts, and a non-nullable `int` would silently
 collapse them into `0`.
 
-## Getting started
+## Quick start with Docker
+
+The fastest way to get a working stack - no .NET SDK or MySQL install needed:
+
+```bash
+docker compose up -d --build
+```
+
+That starts MySQL 8 and the API together. The API waits for the database to
+report *healthy* (not merely started) and applies the EF Core migrations on
+boot, so the schema is ready without any extra step.
+
+The API is then on `http://localhost:8080`:
+
+```bash
+curl http://localhost:8080/api/merchants
+```
+
+Run the screening job against it:
+
+```bash
+cd python-automation
+pip install -r requirements.txt
+python risk_screening.py --api-url http://localhost:8080
+```
+
+Stop the stack with `docker compose down`, or `docker compose down -v` to
+delete the database volume as well.
+
+The MySQL password defaults to `devpassword` and can be overridden with the
+`MYSQL_ROOT_PASSWORD` environment variable (or a `.env` file).
+
+### Running the tests in Docker
+
+```bash
+docker build -f Dockerfile.test -t merchant-tests .
+docker run --rm merchant-tests
+```
+
+Useful on any machine whose security policy blocks running locally-built
+binaries - Windows Smart App Control, for instance, blocks unsigned freshly
+compiled assemblies, which stops `dotnet test` from loading the test DLL.
+
+## Running locally without Docker
 
 ### Prerequisites
 
@@ -254,6 +297,12 @@ the scoring itself left deterministic and auditable.
   snapshots by default; read-only queries never need them.
 - **Status changes are logged** with the old and new value. A compliance
   decision needs an audit trail.
+- **Migrations apply at startup only when `ApplyMigrationsAtStartup` is set**,
+  which docker-compose does. It keeps the container self-contained; a real
+  deployment would run migrations as a separate, deliberate step rather than
+  on every boot.
+- **The API image runs as a non-root user** and carries only the ASP.NET
+  runtime - the SDK, compiler and source stay in the discarded build stage.
 
 ## Known limitations
 

@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mysql:8
+    container_name: merchant-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-merchant_onboarding}
+    ports:
+      # Exposed so you can inspect the database from the host.
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      # The API must wait until MySQL can actually answer queries, not merely
+      # until the container has started - those are several seconds apart.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-devpassword}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: src/MerchantOnboarding.Api/Dockerfile
+    container_name: merchant-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # Container comes up with a usable schema; off by default elsewhere.
+      ApplyMigrationsAtStartup: "true"
+      # "db" is the compose service name, resolved on the shared network.
+      ConnectionStrings__DefaultConnection: >-
+        server=db;port=3306;database=${MYSQL_DATABASE:-merchant_onboarding};user=root;password=${MYSQL_ROOT_PASSWORD:-devpassword}
+    ports:
+      - "8080:8080"
+
+volumes:
+  db-data:

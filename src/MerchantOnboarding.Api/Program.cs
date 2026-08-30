@@ -23,6 +23,16 @@ builder.Services.AddSingleton<IMerchantService, MerchantService>();
 
 var app = builder.Build();
 
+// Apply any pending migrations at startup so a fresh container comes up with
+// a usable schema. Fine for a demo; a production deployment would run
+// migrations as a separate, deliberate step rather than on every boot.
+if (app.Configuration.GetValue<bool>("ApplyMigrationsAtStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -1,0 +1,24 @@
+# Build artefacts - the image builds these itself
+**/bin/
+**/obj/
+
+# Local tooling and environments
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+.config/
+
+# Version control and IDE
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+
+# Docs and local-only files
+README.md
+CLAUDE.md
+**/*.md
+docker-compose.yml
+**/Dockerfile
