@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MerchantOnboarding.Api/MerchantOnboarding.Api.csproj" />
+  </Folder>
+</Solution>
