@@ -63,3 +63,27 @@ Content-Type: application/json
 {
   "status": "Maybe"
 }
+
+### Write back a low risk score -> stays Pending
+PUT {{MerchantOnboarding.Api_HostAddress}}/api/merchants/1/risk-score
+Content-Type: application/json
+
+{
+  "riskScore": 15
+}
+
+### Write back a high risk score -> auto-flagged for review
+PUT {{MerchantOnboarding.Api_HostAddress}}/api/merchants/1/risk-score
+Content-Type: application/json
+
+{
+  "riskScore": 85
+}
+
+### Out-of-range score -> 400
+PUT {{MerchantOnboarding.Api_HostAddress}}/api/merchants/1/risk-score
+Content-Type: application/json
+
+{
+  "riskScore": 150
+}

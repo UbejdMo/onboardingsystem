@@ -24,6 +24,34 @@ public class MerchantService : IMerchantService
             "AF"  // Afghanistan
         };
 
+    /// <summary>
+    /// Scores at or above this are held for a compliance officer to review.
+    /// </summary>
+    public int HighRiskScoreThreshold => 70;
+
+    public bool IsValidRiskScore(int riskScore) => riskScore is >= 0 and <= 100;
+
+    public void ApplyRiskScore(Merchant merchant, int riskScore)
+    {
+        ArgumentNullException.ThrowIfNull(merchant);
+
+        if (!IsValidRiskScore(riskScore))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(riskScore), riskScore, "Risk score must be between 0 and 100.");
+        }
+
+        merchant.RiskScore = riskScore;
+
+        // Scoring only ever escalates. A high score flags the merchant for
+        // review, but a low score must not silently clear a decision a human
+        // already made - un-flagging is a compliance officer's call.
+        if (riskScore >= HighRiskScoreThreshold && merchant.Status == MerchantStatus.Pending)
+        {
+            merchant.Status = MerchantStatus.Flagged;
+        }
+    }
+
     public ValidationResult Validate(CreateMerchantRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

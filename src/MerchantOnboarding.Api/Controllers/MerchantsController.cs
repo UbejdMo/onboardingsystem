@@ -157,6 +157,78 @@ public class MerchantsController : ControllerBase
     }
 
     /// <summary>
+    /// Records a computed risk score. Called by the screening job, which
+    /// owns the scoring rules; the API owns what the score means.
+    /// </summary>
+    [HttpPut("{id:int}/risk-score")]
+    [ProducesResponseType(typeof(MerchantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MerchantResponse>> UpdateRiskScore(
+        int id,
+        [FromBody] UpdateRiskScoreRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request?.RiskScore is null)
+        {
+            return BadRequest(new ValidationProblemDetails
+            {
+                Title = "Risk score is required.",
+                Status = StatusCodes.Status400BadRequest,
+                Errors = { ["riskScore"] = new[] { "A risk score must be supplied." } }
+            });
+        }
+
+        var riskScore = request.RiskScore.Value;
+
+        if (!_merchantService.IsValidRiskScore(riskScore))
+        {
+            return BadRequest(new ValidationProblemDetails
+            {
+                Title = "Invalid risk score.",
+                Status = StatusCodes.Status400BadRequest,
+                Errors = { ["riskScore"] = new[] { "Risk score must be between 0 and 100." } }
+            });
+        }
+
+        var merchant = await _db.Merchants
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+
+        if (merchant is null)
+        {
+            return NotFound(ProblemForMissingMerchant(id));
+        }
+
+        var previousStatus = merchant.Status;
+        _merchantService.ApplyRiskScore(merchant, riskScore);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        if (merchant.Status != previousStatus)
+        {
+            _logger.LogInformation(
+                "Merchant {MerchantId} auto-flagged: risk score {RiskScore} reached threshold {Threshold}",
+                merchant.Id, riskScore, _merchantService.HighRiskScoreThreshold);
+        }
+        else if (riskScore >= _merchantService.HighRiskScoreThreshold)
+        {
+            // High score on a merchant a human has already decided on. The
+            // decision stands, but this must not pass silently.
+            _logger.LogWarning(
+                "Merchant {MerchantId} scored {RiskScore} (at or above threshold {Threshold}) " +
+                "but keeps existing status {Status} set by a reviewer",
+                merchant.Id, riskScore, _merchantService.HighRiskScoreThreshold, merchant.Status);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Merchant {MerchantId} scored {RiskScore}, status unchanged at {Status}",
+                merchant.Id, riskScore, merchant.Status);
+        }
+
+        return Ok(MerchantResponse.FromMerchant(merchant));
+    }
+
+    /// <summary>
     /// Parses a status name. Enum.TryParse alone would accept numeric input
     /// such as "99" and produce an undefined status, so the result is checked
     /// against the values actually declared.

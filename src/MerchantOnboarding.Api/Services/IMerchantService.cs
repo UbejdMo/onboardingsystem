@@ -23,4 +23,16 @@ public interface IMerchantService
     /// status and normalising the stored values.
     /// </summary>
     Merchant CreateMerchant(CreateMerchantRequest request);
+
+    /// <summary>The inclusive score at or above which a merchant is held for review.</summary>
+    int HighRiskScoreThreshold { get; }
+
+    /// <summary>Whether a risk score is within the accepted 0-100 range.</summary>
+    bool IsValidRiskScore(int riskScore);
+
+    /// <summary>
+    /// Applies a screening result to a merchant: records the score and holds
+    /// the merchant for review if it reaches the high-risk threshold.
+    /// </summary>
+    void ApplyRiskScore(Merchant merchant, int riskScore);
 }
