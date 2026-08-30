@@ -1,6 +1,65 @@
 @MerchantOnboarding.Api_HostAddress = http://localhost:5119
 
-GET {{MerchantOnboarding.Api_HostAddress}}/weatherforecast/
+### Onboard a merchant in a normal country -> Pending
+POST {{MerchantOnboarding.Api_HostAddress}}/api/merchants
+Content-Type: application/json
+
+{
+  "businessName": "Acme Payments Ltd",
+  "email": "ops@acmepayments.com",
+  "country": "DE",
+  "description": "Online electronics retailer"
+}
+
+### Onboard a merchant in a high-risk country -> Flagged
+POST {{MerchantOnboarding.Api_HostAddress}}/api/merchants
+Content-Type: application/json
+
+{
+  "businessName": "Desert Trading Co",
+  "email": "contact@deserttrading.com",
+  "country": "IR",
+  "description": "Import and export brokerage"
+}
+
+### Invalid submission -> 400 with all errors listed
+POST {{MerchantOnboarding.Api_HostAddress}}/api/merchants
+Content-Type: application/json
+
+{
+  "businessName": "",
+  "email": "not-an-email",
+  "country": "USA"
+}
+
+### List all merchants
+GET {{MerchantOnboarding.Api_HostAddress}}/api/merchants
 Accept: application/json
 
-###
+### List only merchants awaiting review
+GET {{MerchantOnboarding.Api_HostAddress}}/api/merchants?status=Pending
+Accept: application/json
+
+### Fetch one merchant
+GET {{MerchantOnboarding.Api_HostAddress}}/api/merchants/1
+Accept: application/json
+
+### Unknown merchant -> 404
+GET {{MerchantOnboarding.Api_HostAddress}}/api/merchants/9999
+Accept: application/json
+
+### Record a compliance decision
+PUT {{MerchantOnboarding.Api_HostAddress}}/api/merchants/1/status
+Content-Type: application/json
+
+{
+  "status": "Approved"
+}
+
+### Invalid status -> 400 listing valid values
+PUT {{MerchantOnboarding.Api_HostAddress}}/api/merchants/1/status
+Content-Type: application/json
+
+{
+  "status": "Maybe"
+}
