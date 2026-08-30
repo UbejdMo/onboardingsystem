@@ -483,6 +483,7 @@ $RECYCLE.BIN/
 
 # Local agent instructions - not part of the project
 CLAUDE.md
+CLAUDE*.md
 
 # Python virtual environments
 .venv/

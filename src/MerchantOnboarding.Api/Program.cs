@@ -21,6 +21,22 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Stateless rules, so a single shared instance is fine.
 builder.Services.AddSingleton<IMerchantService, MerchantService>();
 
+// The React dev server runs on its own origin, so the browser blocks its
+// calls unless the API opts in. Restricted to that one origin rather than
+// a wildcard - this API will eventually carry real merchant data.
+const string FrontendCorsPolicy = "FrontendDevServer";
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:5173"];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FrontendCorsPolicy, policy =>
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 // Apply any pending migrations at startup so a fresh container comes up with
@@ -40,6 +56,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Must come before the endpoints it applies to.
+app.UseCors(FrontendCorsPolicy);
 
 app.UseAuthorization();
 
