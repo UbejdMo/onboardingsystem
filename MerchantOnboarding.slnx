@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/MerchantOnboarding.Api/MerchantOnboarding.Api.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MerchantOnboarding.Tests/MerchantOnboarding.Tests.csproj" />
+  </Folder>
 </Solution>
