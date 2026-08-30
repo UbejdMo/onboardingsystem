@@ -1,4 +1,5 @@
 using MerchantOnboarding.Api.Data;
+using MerchantOnboarding.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // which would make the app unable to boot without a running database.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36))));
+
+// Stateless rules, so a single shared instance is fine.
+builder.Services.AddSingleton<IMerchantService, MerchantService>();
 
 var app = builder.Build();
 
