@@ -1,24 +1,27 @@
-# Merchant Onboarding & Risk Screening API
+# Merchant Onboarding & Risk Screening Platform
 
-A small fintech-style backend for onboarding merchants and tracking their
-compliance status: an ASP.NET Core Web API backed by MySQL, plus a Python
-automation job that scores pending merchants against explainable risk rules
-and writes the results back through the API.
+A small fintech-style fullstack app for onboarding merchants and tracking
+their compliance status: an ASP.NET Core Web API backed by MySQL, a React
+frontend for reviewing and deciding on merchants, and a Python automation job
+that scores pending merchants against explainable risk rules and writes the
+results back through the API.
 
 It mirrors a real payments-company workflow — merchant onboarding, compliance
-screening, an internal REST API, and a scheduled screening job.
+screening, an internal REST API, a review UI, and a scheduled screening job.
 
 ## Architecture
 
 ```
-                  ┌──────────────────────────┐
-                  │  Python screening job    │
-                  │  risk_screening.py       │
-                  └───────────┬──────────────┘
-                     GET pending/flagged
-                     PUT risk scores
-                              │
-                  ┌───────────▼──────────────┐
+   ┌──────────────────────────┐   ┌──────────────────────────┐
+   │  React frontend (Vite)   │   │  Python screening job    │
+   │  list · onboard · decide │   │  risk_screening.py       │
+   └───────────┬──────────────┘   └───────────┬──────────────┘
+      GET / POST / PUT                GET pending/flagged
+      (browser, needs CORS)           PUT risk scores
+               │                                │
+               └────────────────┬───────────────┘
+                                │
+                  ┌─────────────▼────────────┐
                   │  ASP.NET Core Web API    │
                   │  MerchantsController     │  ← HTTP, status codes
                   ├──────────────────────────┤
@@ -41,8 +44,10 @@ The layers are kept deliberately separate:
   which is what lets the unit tests run with no infrastructure at all.
 - **DbContext** — persistence only.
 
-The Python job is a *client*. It computes scores but does not decide what they
-mean; the API owns the flagging threshold.
+Both the frontend and the Python job are *clients*. Neither owns any business
+rule: the job computes scores but the API decides what a score means, and the
+UI renders decisions but the API decides what is valid. Validation lives in one
+place, so the rules cannot drift apart between callers.
 
 ## Tech stack
 
@@ -51,6 +56,7 @@ mean; the API owns the flagging threshold.
 | API | ASP.NET Core Web API (.NET 10, controller-based) |
 | ORM | EF Core 9 + Pomelo.EntityFrameworkCore.MySql 9.0.0 |
 | Database | MySQL 8 |
+| Frontend | React 19 + Vite, plain `fetch` (no state library) |
 | Tests | xUnit |
 | Automation | Python 3 + `requests` |
 
@@ -89,6 +95,21 @@ The API is then on `http://localhost:8080`:
 curl http://localhost:8080/api/merchants
 ```
 
+### Then start the frontend
+
+`docker compose` runs the backend only - the frontend runs from its own dev
+server, which is what gives you hot reloading while working on it:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` for the merchant review UI. It is preconfigured
+to call the API on port 8080, so with the stack up it works with no further
+setup.
+
 Run the screening job against it:
 
 ```bash
@@ -120,6 +141,7 @@ compiled assemblies, which stops `dotnet test` from loading the test DLL.
 
 - .NET 10 SDK
 - MySQL 8 (running locally, or via Docker)
+- Node.js 20+ (for the frontend)
 - Python 3.10+
 
 ### 1. Configure the database
@@ -163,7 +185,31 @@ served at `/openapi/v1.json`.
 dotnet test
 ```
 
-### 5. Run the screening job
+### 5. Run the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. The dev server port is pinned in
+`vite.config.js` - it has to match the origin the API allows through CORS, so
+Vite is configured to fail rather than silently move to another port.
+
+By default the frontend calls `http://localhost:8080` (the Docker API). To
+point it somewhere else - the local `dotnet run` on port 5119, say - create
+`frontend/.env.local`:
+
+```
+VITE_API_URL=http://localhost:5119
+```
+
+Whichever origin serves the frontend must be listed under
+`Cors:AllowedOrigins` in `appsettings.json`, or the browser will block every
+request.
+
+### 6. Run the screening job
 
 ```bash
 cd python-automation
@@ -212,6 +258,35 @@ small hardcoded set of high-risk countries are onboarded as `Flagged` for
 manual review; everyone else starts `Pending`.
 
 Errors use the standard `ProblemDetails` format (RFC 7807).
+
+## The review UI
+
+`frontend/` is a React app for the people who actually make onboarding
+decisions. Three things, matching the compliance workflow:
+
+- **The merchant queue** - business name, country, status badge and risk
+  score, newest first.
+- **An onboarding form** - submits a new merchant and shows the API's
+  validation messages if it is rejected.
+- **Approve / Reject** on each row, writing the decision back through
+  `PUT /api/merchants/{id}/status`.
+
+It deliberately holds no business logic. Validation errors are the API's own
+messages rather than rules reimplemented in JavaScript, so the two can never
+disagree - the email field is even a plain text input, so the browser's
+built-in check cannot pre-empt the server's answer.
+
+Three details worth knowing:
+
+- **A null risk score renders as "Not screened", never `0`.** The distinction
+  the database and DTOs protect would be lost if the UI printed a raw value.
+- **Status badges always show the status word**, not colour alone - red and
+  green are the pair most affected by colour blindness, and here they mean
+  rejected and approved.
+- **Decisions are not applied optimistically.** The badge changes only after
+  the API confirms the write. If the request fails the row is left alone and
+  the error names the merchant, so nobody is told a decision was recorded when
+  it was not.
 
 ## How risk screening works
 
@@ -303,14 +378,25 @@ the scoring itself left deterministic and auditable.
   on every boot.
 - **The API image runs as a non-root user** and carries only the ASP.NET
   runtime - the SDK, compiler and source stay in the discarded build stage.
+- **CORS is restricted to the frontend's origin**, not a wildcard. The browser
+  blocks cross-origin calls unless the API opts in; a wildcard would let any
+  site a user visits call this API from their browser.
+- **The Vite dev port is pinned with `strictPort`.** Vite would otherwise move
+  to another port when 5173 is busy, and every API call would then be blocked
+  by CORS with a confusing error. Failing loudly is better.
 
 ## Known limitations
 
 Deliberate scope choices for a demonstration project, not oversights:
 
-- **No authentication.** Every endpoint is open. Real deployment needs
+- **No authentication.** Every endpoint is open, and the UI has no login, so
+  anyone who can reach it can approve a merchant. Real deployment needs
   authentication and role-based authorisation — writing a risk score should be
-  restricted to the screening job's identity.
+  restricted to the screening job's identity, and approving a merchant to a
+  compliance officer.
+- **The frontend has no automated tests.** The backend service layer is
+  covered by xUnit; the UI was verified by hand.
+- **No pagination in the UI** either — it renders whatever the API returns.
 - **No pagination** on `GET /api/merchants`.
 - **The high-risk country list and keyword weights are hardcoded.** In
   production these belong in configuration so compliance staff can change them
