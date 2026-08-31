@@ -1,0 +1,43 @@
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Colour reinforces the label but never replaces it - the status word is
+   always present, so the table stays readable for colour-blind users. */
+
+.badge--pending {
+  background: #eef1f5;
+  border-color: #d5dae1;
+  color: #4a5563;
+}
+
+.badge--approved {
+  background: #e7f5ec;
+  border-color: #b9e0c8;
+  color: #1d6b39;
+}
+
+.badge--rejected {
+  background: #fdecec;
+  border-color: #f3c2c2;
+  color: #a51f26;
+}
+
+/* Flagged is the one that needs attention, so it carries the strongest colour. */
+.badge--flagged {
+  background: #fef3e2;
+  border-color: #f5d9a8;
+  color: #9a5c06;
+}
+
+.badge--unknown {
+  background: #f1f1f4;
+  border-color: #dcdce2;
+  color: #5a5a66;
+}

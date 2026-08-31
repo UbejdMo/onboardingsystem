@@ -1,0 +1,72 @@
+.table-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  /* Narrow screens scroll the table rather than the whole page. */
+  overflow-x: auto;
+}
+
+.merchant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.925rem;
+}
+
+.merchant-table th,
+.merchant-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.merchant-table th {
+  font-size: 0.775rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: #fafbfc;
+  white-space: nowrap;
+}
+
+/* No trailing rule under the final row. */
+.merchant-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.merchant-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.numeric {
+  text-align: right;
+}
+
+.business-name {
+  display: block;
+  font-weight: 600;
+}
+
+.email {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.825rem;
+  color: var(--color-text-muted);
+}
+
+.risk-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* At or above the API's flag threshold. */
+.risk-score--high {
+  color: var(--color-danger);
+}
+
+.risk-score--none {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
