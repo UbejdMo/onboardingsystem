@@ -20,7 +20,7 @@ function RiskScore({ score }) {
   )
 }
 
-function MerchantTable({ merchants }) {
+function MerchantTable({ merchants, onStatusChange, updatingId }) {
   return (
     <div className="table-wrapper">
       <table className="merchant-table">
@@ -30,24 +30,52 @@ function MerchantTable({ merchants }) {
             <th>Country</th>
             <th>Status</th>
             <th className="numeric">Risk score</th>
+            <th className="actions-header">Decision</th>
           </tr>
         </thead>
         <tbody>
-          {merchants.map((merchant) => (
-            <tr key={merchant.id}>
-              <td>
-                <span className="business-name">{merchant.businessName}</span>
-                <span className="email">{merchant.email}</span>
-              </td>
-              <td>{merchant.country}</td>
-              <td>
-                <StatusBadge status={merchant.status} />
-              </td>
-              <td className="numeric">
-                <RiskScore score={merchant.riskScore} />
-              </td>
-            </tr>
-          ))}
+          {merchants.map((merchant) => {
+            // Only the row being saved is disabled, so one slow request does
+            // not lock the whole table.
+            const isUpdating = updatingId === merchant.id
+
+            return (
+              <tr key={merchant.id}>
+                <td>
+                  <span className="business-name">{merchant.businessName}</span>
+                  <span className="email">{merchant.email}</span>
+                </td>
+                <td>{merchant.country}</td>
+                <td>
+                  <StatusBadge status={merchant.status} />
+                </td>
+                <td className="numeric">
+                  <RiskScore score={merchant.riskScore} />
+                </td>
+                <td>
+                  <div className="row-actions">
+                    <button
+                      type="button"
+                      className="button button--small button--approve"
+                      onClick={() => onStatusChange(merchant, 'Approved')}
+                      // Already approved, so the action would be a no-op.
+                      disabled={isUpdating || merchant.status === 'Approved'}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      className="button button--small button--reject"
+                      onClick={() => onStatusChange(merchant, 'Rejected')}
+                      disabled={isUpdating || merchant.status === 'Rejected'}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

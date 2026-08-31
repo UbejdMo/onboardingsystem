@@ -81,3 +81,10 @@ export function createMerchant(merchant) {
     body: JSON.stringify(merchant),
   })
 }
+
+export function updateMerchantStatus(id, status) {
+  return request(`/api/merchants/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  })
+}

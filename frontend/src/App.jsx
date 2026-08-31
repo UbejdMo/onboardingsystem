@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchMerchants } from './api/merchants'
+import { fetchMerchants, updateMerchantStatus } from './api/merchants'
 import MerchantTable from './components/MerchantTable'
 import OnboardMerchantForm from './components/OnboardMerchantForm'
 import './App.css'
@@ -8,6 +8,8 @@ function App() {
   const [merchants, setMerchants] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [updatingId, setUpdatingId] = useState(null)
+  const [actionError, setActionError] = useState(null)
 
   const loadMerchants = useCallback(async (signal) => {
     setIsLoading(true)
@@ -29,6 +31,26 @@ function App() {
     // The API returns the created merchant in full and the list is newest
     // first, so prepend it instead of paying for another round trip.
     setMerchants((current) => [merchant, ...current])
+  }, [])
+
+  const handleStatusChange = useCallback(async (merchant, status) => {
+    setUpdatingId(merchant.id)
+    setActionError(null)
+
+    try {
+      const updated = await updateMerchantStatus(merchant.id, status)
+      // The API returns the merchant in its new state, so swap that one row
+      // rather than refetching the whole list.
+      setMerchants((current) =>
+        current.map((m) => (m.id === updated.id ? updated : m)),
+      )
+    } catch (err) {
+      setActionError(
+        `Could not update ${merchant.businessName}: ${err.message}`,
+      )
+    } finally {
+      setUpdatingId(null)
+    }
   }, [])
 
   useEffect(() => {
@@ -70,6 +92,12 @@ function App() {
             )}
           </div>
 
+          {actionError && (
+            <div className="action-error" role="alert">
+              {actionError}
+            </div>
+          )}
+
           {isLoading && <p className="state-message">Loading merchants…</p>}
 
           {error && !isLoading && (
@@ -92,7 +120,11 @@ function App() {
           )}
 
           {!isLoading && !error && merchants.length > 0 && (
-            <MerchantTable merchants={merchants} />
+            <MerchantTable
+              merchants={merchants}
+              onStatusChange={handleStatusChange}
+              updatingId={updatingId}
+            />
           )}
         </section>
       </main>

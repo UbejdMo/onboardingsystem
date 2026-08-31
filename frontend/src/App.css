@@ -96,3 +96,15 @@
 .button--secondary {
   color: var(--color-text);
 }
+
+/* A failed decision is reported above the table without replacing it - the
+   rest of the queue stays usable. */
+.action-error {
+  margin-bottom: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid #f3c2c2;
+  border-radius: var(--radius);
+}

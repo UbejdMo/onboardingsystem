@@ -70,3 +70,30 @@
   font-size: 0.85rem;
   color: var(--color-text-muted);
 }
+
+.actions-header {
+  text-align: right;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.button--small {
+  padding: 0.28rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.button--approve:hover:not(:disabled) {
+  background: #e7f5ec;
+  border-color: #b9e0c8;
+  color: #1d6b39;
+}
+
+.button--reject:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  border-color: #f3c2c2;
+  color: var(--color-danger);
+}
