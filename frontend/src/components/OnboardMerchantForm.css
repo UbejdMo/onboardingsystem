@@ -1,0 +1,114 @@
+.onboard-form {
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.onboard-form h2 {
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* The two-letter country code needs far less room than a business name. */
+.field--narrow {
+  max-width: 160px;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field__label {
+  font-size: 0.825rem;
+  font-weight: 600;
+}
+
+.field__optional,
+.field__hint {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.field__hint {
+  font-size: 0.775rem;
+}
+
+.field input,
+.field textarea {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  width: 100%;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+  border-color: var(--color-accent);
+}
+
+.field input:disabled,
+.field textarea:disabled {
+  background: #f5f6f8;
+  color: var(--color-text-muted);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.button--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+}
+
+.form-errors {
+  margin-bottom: 1.15rem;
+  padding: 0.85rem 1rem;
+  background: var(--color-danger-bg);
+  border: 1px solid #f3c2c2;
+  border-radius: var(--radius);
+  color: var(--color-danger);
+}
+
+.form-errors__title {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.form-errors ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.875rem;
+}

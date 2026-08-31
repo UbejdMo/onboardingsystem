@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchMerchants } from './api/merchants'
 import MerchantTable from './components/MerchantTable'
+import OnboardMerchantForm from './components/OnboardMerchantForm'
 import './App.css'
 
 function App() {
@@ -22,6 +23,12 @@ function App() {
     } finally {
       if (!signal?.aborted) setIsLoading(false)
     }
+  }, [])
+
+  const handleMerchantCreated = useCallback((merchant) => {
+    // The API returns the created merchant in full and the list is newest
+    // first, so prepend it instead of paying for another round trip.
+    setMerchants((current) => [merchant, ...current])
   }, [])
 
   useEffect(() => {
@@ -50,6 +57,8 @@ function App() {
       </header>
 
       <main className="app-main">
+        <OnboardMerchantForm onMerchantCreated={handleMerchantCreated} />
+
         <section>
           <div className="section-header">
             <h2>Merchants</h2>

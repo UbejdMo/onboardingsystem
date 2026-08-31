@@ -74,3 +74,10 @@ async function request(path, options = {}) {
 export function fetchMerchants(signal) {
   return request('/api/merchants', { signal })
 }
+
+export function createMerchant(merchant) {
+  return request('/api/merchants', {
+    method: 'POST',
+    body: JSON.stringify(merchant),
+  })
+}
